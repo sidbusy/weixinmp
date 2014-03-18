@@ -34,7 +34,7 @@ Hello, 世界
 		// 仅主动发送消息时可不填写token
 		mp := weixinmp.New(token, appid, secret)
 		// 检查请求是否有效
-		// 仅发送客服消息时不用检查
+		// 仅主动发送消息时不用检查
 		if !mp.Request.IsValid(w, r) {
 			return
 		}
@@ -78,7 +78,7 @@ Hello, 世界
 
 `weixinmp.EventView` 菜单跳转链接事件
 
-回复消息方法
+回复消息
 -
 
 `mp.ReplyTextMsg(w, "content")` 回复文本消息
@@ -95,7 +95,9 @@ Hello, 世界
 
 `mediaId` 媒体文件上传后获取的唯一标识
 
-发送消息方法
+返回`error`类型值
+
+发送消息
 -
 
 `mp.SendTextMsg(touser, "content")` 发送文本消息
@@ -113,6 +115,8 @@ Hello, 世界
 `touser` 普通用户openid
 
 `mediaId` 媒体文件上传后获取的唯一标识
+
+返回`error`类型值
 
 视频、音乐、图文消息结构
 -
@@ -145,6 +149,26 @@ Hello, 世界
 		Url         string
 	}
 
+创建二维码
+-
+
+`mp.CreateQRScene(sceneId)` 创建临时二维码
+
+`mp.CreateQRLimitScene(expireSeconds, sceneId)` 创建永久二维码
+
+`expireSeconds` 临时二维码有效时间, 以秒为单位, 最大不超过1800.
+
+`sceneId` 场景值ID, 临时二维码时为32位非0整型, 永久二维码时最大值为100000 ( 目前参数只支持1-100000 ).
+
+返回`(string, error)`类型值, 返回的string类型值为获取的二维码ticket, 凭借此ticket可以在有效时间内换取二维码.
+
+换取二维码URL
+-
+
+`mp.GetQRCodeURL(ticket)`
+
+返回`string`类型值
+
 相关链接
 -
 
@@ -166,7 +190,6 @@ Hello, 世界
 Todo
 
 - 上传/下载多媒体文件
-- 创建/换取带参数的二维码
 - 创建/查询/删除自定义菜单
 
 Release 20140318
@@ -175,3 +198,4 @@ Release 20140318
 - 解析请求
 - 获取/缓存access token
 - 回复/发送消息
+- 创建/换取带参数的二维码

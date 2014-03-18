@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"reflect"
 	"time"
+
+	"os"
 )
 
 const (
@@ -32,6 +34,16 @@ const (
 	mediaPreUrl     = "http://file.api.weixin.qq.com/cgi-bin/media/"
 	accessTokenTemp = "accesstoken.temp"
 )
+
+type qrScene struct {
+	ExpireSeconds int64  `json:"expire_seconds,omitempty"`
+	ActionName    string `json:"action_name"`
+	ActionInfo    struct {
+		Scene struct {
+			SceneId int64 `json:"scene_id"`
+		} `json:"scene"`
+	} `json:"action_info"`
+}
 
 // message structs
 type textMsg struct {
@@ -194,60 +206,101 @@ func (this *Weixinmp) replyMsg(rw http.ResponseWriter, msg interface{}) error {
 }
 
 // send message methods
-func (this *Weixinmp) SendTextMsg(touser string, content string) ([]byte, error) {
+func (this *Weixinmp) SendTextMsg(touser string, content string) error {
 	var msg textMsg
 	msg.MsgType = "text"
 	msg.Text.Content = content
 	return this.sendMsg(touser, &msg)
 }
 
-func (this *Weixinmp) SendImageMsg(touser string, mediaId string) ([]byte, error) {
+func (this *Weixinmp) SendImageMsg(touser string, mediaId string) error {
 	var msg imageMsg
 	msg.MsgType = "image"
 	msg.Image.MediaId = mediaId
 	return this.sendMsg(touser, &msg)
 }
 
-func (this *Weixinmp) SendVoiceMsg(touser string, mediaId string) ([]byte, error) {
+func (this *Weixinmp) SendVoiceMsg(touser string, mediaId string) error {
 	var msg voiceMsg
 	msg.MsgType = "voice"
 	msg.Voice.MediaId = mediaId
 	return this.sendMsg(touser, &msg)
 }
 
-func (this *Weixinmp) SendVideoMsg(touser string, video *Video) ([]byte, error) {
+func (this *Weixinmp) SendVideoMsg(touser string, video *Video) error {
 	var msg videoMsg
 	msg.MsgType = "video"
 	msg.Video = video
 	return this.sendMsg(touser, &msg)
 }
 
-func (this *Weixinmp) SendMusicMsg(touser string, music *Music) ([]byte, error) {
+func (this *Weixinmp) SendMusicMsg(touser string, music *Music) error {
 	var msg musicMsg
 	msg.MsgType = "music"
 	msg.Music = music
 	return this.sendMsg(touser, &msg)
 }
 
-func (this *Weixinmp) SendNewsMsg(touser string, articles *[]Article) ([]byte, error) {
+func (this *Weixinmp) SendNewsMsg(touser string, articles *[]Article) error {
 	var msg newsMsg
 	msg.MsgType = "news"
 	msg.Articles.Item = articles
 	return this.sendMsg(touser, &msg)
 }
 
-func (this *Weixinmp) sendMsg(touser string, msg interface{}) ([]byte, error) {
+func (this *Weixinmp) sendMsg(touser string, msg interface{}) error {
 	v := reflect.ValueOf(msg).Elem()
 	v.FieldByName("ToUserName").SetString(touser)
 	data, err := json.Marshal(msg)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	raw, err := this.post("message/custom/send", data)
+	if _, err := this.post("message/custom/send", data); err != nil {
+		return err
+	}
+	return nil
+}
+
+// get qrcode url
+func (this *Weixinmp) GetQRCodeURL(ticket string) string {
+	return "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" + ticket
+}
+
+// create permanent qrcode
+func (this *Weixinmp) CreateQRScene(sceneId int64) (string, error) {
+	var inf qrScene
+	inf.ActionName = "QR_SCENE"
+	inf.ActionInfo.Scene.SceneId = sceneId
+	return this.createQRCode(&inf)
+}
+
+// create temporary qrcode
+func (this *Weixinmp) CreateQRLimitScene(expireSeconds, sceneId int64) (string, error) {
+	var inf qrScene
+	inf.ExpireSeconds = expireSeconds
+	inf.ActionName = "QR_LIMIT_SCENE"
+	inf.ActionInfo.Scene.SceneId = sceneId
+	return this.createQRCode(&inf)
+}
+
+func (this *Weixinmp) createQRCode(inf *qrScene) (string, error) {
+	data, err := json.Marshal(inf)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return raw, nil
+	raw, err := this.post("qrcode/create", data)
+	if err != nil {
+		return "", err
+	}
+	var rtn struct {
+		Ticket        string `json:"ticket"`
+		ExpireSeconds int64  `json:"expire_seconds"`
+	}
+	if err := json.Unmarshal(raw, &rtn); err != nil {
+		return "", err
+	}
+	os.Stdout.WriteString(rtn.Ticket)
+	return rtn.Ticket, nil
 }
 
 // send post request
