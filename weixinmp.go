@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"reflect"
 	"time"
-
-	"os"
 )
 
 const (
@@ -299,7 +297,6 @@ func (this *Weixinmp) createQRCode(inf *qrScene) (string, error) {
 	if err := json.Unmarshal(raw, &rtn); err != nil {
 		return "", err
 	}
-	os.Stdout.WriteString(rtn.Ticket)
 	return rtn.Ticket, nil
 }
 
