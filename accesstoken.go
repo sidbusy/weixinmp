@@ -18,26 +18,11 @@ type accessToken struct {
 func (this *accessToken) extract() (string, error) {
 	fi, err := os.Stat(accessTokenTemp)
 	if err != nil && !os.IsExist(err) {
-		if token, err := this.fetch(); err != nil {
-			return "", err
-		} else {
-			if err := this.store(token); err != nil {
-				return "", err
-			}
-			return token, nil
-		}
-	} else {
-		expires := fi.ModTime().Unix() + 7200
-		if expires <= time.Now().Unix() {
-			if token, err := this.fetch(); err != nil {
-				return "", err
-			} else {
-				if err := this.store(token); err != nil {
-					return "", err
-				}
-				return token, nil
-			}
-		}
+		return this.fetchAndStore()
+	}
+	expires := fi.ModTime().Unix() + 7200
+	if expires <= time.Now().Unix() {
+		return this.fetchAndStore()
 	}
 	temp, err := os.OpenFile(accessTokenTemp, os.O_RDONLY, os.ModeTemporary)
 	defer temp.Close()
@@ -49,6 +34,17 @@ func (this *accessToken) extract() (string, error) {
 		return "", err
 	}
 	return string(raw), nil
+}
+
+func (this *accessToken) fetchAndStore() (string, error) {
+	token, err := this.fetch()
+	if err != nil {
+		return "", err
+	}
+	if err := this.store(token); err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 func (this *accessToken) fetch() (string, error) {
