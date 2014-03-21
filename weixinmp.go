@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"reflect"
 	"time"
 )
@@ -26,6 +28,11 @@ const (
 	EventLocation    = "LOCATION"
 	EventClick       = "CLICK"
 	EventView        = "VIEW"
+	// media file types
+	MediaTypeImage = "image"
+	MediaTypeVoice = "voice"
+	MediaTypeVideo = "video"
+	MediaTypeThumb = "thumb"
 	// environment variables
 	retryNum        = 3
 	plainPreUrl     = "https://api.weixin.qq.com/cgi-bin/"
@@ -302,6 +309,7 @@ func (this *Weixinmp) createQRCode(inf *qrScene) (string, error) {
 
 // send post request
 func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
+	url := plainPreUrl + action + "?access_token="
 	// retry
 	for i := 0; i < retryNum; i++ {
 		token, err := this.accessToken.extract()
@@ -311,8 +319,7 @@ func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
 			}
 			return nil, err
 		}
-		url := plainPreUrl + action + "?access_token=" + token
-		resp, err := http.Post(url, "application/json; charset=utf-8", bytes.NewReader(data))
+		resp, err := http.Post(url+token, "application/json; charset=utf-8", bytes.NewReader(data))
 		defer resp.Body.Close()
 		if err != nil {
 			if i < retryNum {
@@ -342,9 +349,73 @@ func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
 			if i < retryNum {
 				continue
 			}
-			return nil, errors.New(rtn.ErrMsg)
+			return nil, errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
 		}
 		return raw, nil
 	}
 	return nil, errors.New("send post request failed: " + action)
+}
+
+func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
+	url := fmt.Sprintf("%sget?media_id=%s&access_token=", mediaPreUrl, mediaId)
+	for i := 0; i < retryNum; i++ {
+		token, err := this.accessToken.extract()
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		resp, err := http.Get(url + token)
+		defer resp.Body.Close()
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		if resp.Header.Get("Content-Type") == "text/plain" {
+			if i < retryNum {
+				continue
+			}
+			raw, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				if i < retryNum {
+					continue
+				}
+				return err
+			}
+			var rtn struct {
+				ErrCode int64  `json:"errcode"`
+				ErrMsg  string `json:"errmsg"`
+			}
+			if err := json.Unmarshal(raw, &rtn); err != nil {
+				return err
+			}
+			return errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
+		}
+		raw, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		file, err := os.Create(filePath)
+		defer file.Close()
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		if _, err := file.Write(raw); err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		return nil
+	}
+	return errors.New("download media file failed")
 }
