@@ -427,18 +427,18 @@ func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error
 	buf := &bytes.Buffer{}
 	bw := multipart.NewWriter(buf)
 	defer bw.Close()
-	fw, err := bw.CreateFormFile("filename", filePath)
+	f, err := os.Open(filePath)
+	defer f.Close()
 	if err != nil {
 		return "", err
 	}
-	f, err := os.Open(filePath)
+	fw, err := bw.CreateFormFile("filename", f.Name())
 	if err != nil {
 		return "", err
 	}
 	if _, err := io.Copy(fw, f); err != nil {
 		return "", err
 	}
-	bw.Close()
 	url := fmt.Sprintf("%supload?type=%s&access_token=", mediaPreUrl, mediaType)
 	// retry
 	for i := 0; i < retryNum; i++ {
