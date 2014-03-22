@@ -6,7 +6,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"reflect"
@@ -356,8 +358,10 @@ func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
 	return nil, errors.New("send post request failed: " + action)
 }
 
+// download media file
 func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 	url := fmt.Sprintf("%sget?media_id=%s&access_token=", mediaPreUrl, mediaId)
+	// retry
 	for i := 0; i < retryNum; i++ {
 		token, err := this.accessToken.extract()
 		if err != nil {
@@ -374,6 +378,7 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 			}
 			return err
 		}
+		// error occured
 		if resp.Header.Get("Content-Type") == "text/plain" {
 			if i < retryNum {
 				continue
@@ -390,6 +395,9 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 				ErrMsg  string `json:"errmsg"`
 			}
 			if err := json.Unmarshal(raw, &rtn); err != nil {
+				if i < retryNum {
+					continue
+				}
 				return err
 			}
 			return errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
@@ -404,18 +412,78 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 		file, err := os.Create(filePath)
 		defer file.Close()
 		if err != nil {
-			if i < retryNum {
-				continue
-			}
 			return err
 		}
 		if _, err := file.Write(raw); err != nil {
-			if i < retryNum {
-				continue
-			}
 			return err
 		}
 		return nil
 	}
 	return errors.New("download media file failed")
+}
+
+// upload media file
+func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error) {
+	buf := &bytes.Buffer{}
+	bw := multipart.NewWriter(buf)
+	defer bw.Close()
+	fw, err := bw.CreateFormFile("filename", filePath)
+	if err != nil {
+		return "", err
+	}
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	if _, err := io.Copy(fw, f); err != nil {
+		return "", err
+	}
+	bw.Close()
+	url := fmt.Sprintf("%supload?type=%s&access_token=", mediaPreUrl, mediaType)
+	// retry
+	for i := 0; i < retryNum; i++ {
+		token, err := this.accessToken.extract()
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return "", err
+		}
+		resp, err := http.Post(url+token, bw.FormDataContentType(), buf)
+		defer resp.Body.Close()
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return "", err
+		}
+		raw, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return "", err
+		}
+		var rtn struct {
+			Type      string `json:"type"`
+			MediaId   string `json:"media_id"`
+			CreatedAt int64  `json:"created_at"`
+			ErrCode   int64  `json:"errcode"`
+			ErrMsg    string `json:"errmsg"`
+		}
+		if err := json.Unmarshal(raw, &rtn); err != nil {
+			if i < retryNum {
+				continue
+			}
+			return "", nil
+		}
+		if rtn.ErrCode != 0 && rtn.ErrMsg != "" {
+			if i < retryNum {
+				continue
+			}
+			return "", errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
+		}
+		return rtn.MediaId, nil
+	}
+	return "", errors.New("upload media file failed")
 }
