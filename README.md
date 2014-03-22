@@ -157,6 +157,26 @@ type Article struct {
 }
 ```
 
+上传多媒体文件
+-
+
+`mp.UploadMediaFile(mediaType, filePath)` 上传多媒体文件
+
+`mediaType` 多媒体文件类型(`weixinmp.MediaTypeImage`、`weixinmp.MediaTypeVoice`、`weixinmp.MediaTypeVideo`、`weixinmp.MediaTypeThumb`)
+
+`filePath` 多媒体文件路径
+
+返回`(string, error)`类型值， 返回的string类型值为媒体文件上传后获取的唯一标识.
+
+下载多媒体文件
+-
+
+`mp.DownloadMediaFile(mediaId, filePath)` 下载多媒体文件
+
+`mediaId` 媒体文件上传后获取的唯一标识
+
+返回`error`类型值
+
 创建二维码
 -
 
@@ -197,8 +217,11 @@ type Article struct {
 
 Todo
 
-- 上传/下载多媒体文件
 - 创建/查询/删除自定义菜单
+
+Release 20140322
+
+- 上传/下载多媒体文件
 
 Release 20140318
 
