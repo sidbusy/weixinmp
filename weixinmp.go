@@ -316,7 +316,7 @@ func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
 	for i := 0; i < retryNum; i++ {
 		token, err := this.accessToken.extract()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return nil, err
@@ -324,14 +324,14 @@ func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
 		resp, err := http.Post(url+token, "application/json; charset=utf-8", bytes.NewReader(data))
 		defer resp.Body.Close()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return nil, err
 		}
 		raw, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return nil, err
@@ -341,14 +341,14 @@ func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
 			ErrMsg  string `json:"errmsg"`
 		}
 		if err := json.Unmarshal(raw, &rtn); err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return nil, err
 		}
 		// failed
 		if rtn.ErrCode != 0 {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return nil, errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
@@ -365,7 +365,7 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 	for i := 0; i < retryNum; i++ {
 		token, err := this.accessToken.extract()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return err
@@ -373,19 +373,19 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 		resp, err := http.Get(url + token)
 		defer resp.Body.Close()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return err
 		}
 		// error occured
 		if resp.Header.Get("Content-Type") == "text/plain" {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			raw, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				if i < retryNum {
+				if i < retryNum-1 {
 					continue
 				}
 				return err
@@ -395,7 +395,7 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 				ErrMsg  string `json:"errmsg"`
 			}
 			if err := json.Unmarshal(raw, &rtn); err != nil {
-				if i < retryNum {
+				if i < retryNum-1 {
 					continue
 				}
 				return err
@@ -404,7 +404,7 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 		}
 		raw, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return err
@@ -444,7 +444,7 @@ func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error
 	for i := 0; i < retryNum; i++ {
 		token, err := this.accessToken.extract()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return "", err
@@ -452,14 +452,14 @@ func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error
 		resp, err := http.Post(url+token, bw.FormDataContentType(), buf)
 		defer resp.Body.Close()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return "", err
 		}
 		raw, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return "", err
@@ -472,13 +472,13 @@ func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error
 			ErrMsg    string `json:"errmsg"`
 		}
 		if err := json.Unmarshal(raw, &rtn); err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return "", nil
 		}
 		if rtn.ErrCode != 0 && rtn.ErrMsg != "" {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return "", errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
@@ -495,7 +495,7 @@ func (this *Weixinmp) DeleteCustomMenu() error {
 	for i := 0; i < retryNum; i++ {
 		token, err := this.accessToken.extract()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return err
@@ -503,14 +503,14 @@ func (this *Weixinmp) DeleteCustomMenu() error {
 		resp, err := http.Get(url + token)
 		defer resp.Body.Close()
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return err
 		}
 		raw, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return err
@@ -520,13 +520,13 @@ func (this *Weixinmp) DeleteCustomMenu() error {
 			ErrMsg  string `json:"errmsg"`
 		}
 		if err := json.Unmarshal(raw, &rtn); err != nil {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return err
 		}
 		if rtn.ErrCode != 0 {
-			if i < retryNum {
+			if i < retryNum-1 {
 				continue
 			}
 			return errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
