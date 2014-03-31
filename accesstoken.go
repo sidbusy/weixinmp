@@ -25,10 +25,10 @@ func (this *accessToken) extract() (string, error) {
 		return this.fetchAndStore()
 	}
 	temp, err := os.OpenFile(accessTokenTemp, os.O_RDONLY, os.ModeTemporary)
-	defer temp.Close()
 	if err != nil {
 		return "", err
 	}
+	defer temp.Close()
 	raw, err := ioutil.ReadAll(temp)
 	if err != nil {
 		return "", err
@@ -79,10 +79,10 @@ func (this *accessToken) fetch() (string, error) {
 
 func (this *accessToken) store(token string) error {
 	temp, err := os.OpenFile(accessTokenTemp, os.O_WRONLY|os.O_CREATE, os.ModeTemporary)
-	defer temp.Close()
 	if err != nil {
 		return err
 	}
+	defer temp.Close()
 	if _, err := temp.Write([]byte(token)); err != nil {
 		return err
 	}

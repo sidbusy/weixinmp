@@ -409,12 +409,12 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 			}
 			return err
 		}
-		file, err := os.Create(filePath)
-		defer file.Close()
+		f, err := os.Create(filePath)
 		if err != nil {
 			return err
 		}
-		if _, err := file.Write(raw); err != nil {
+		defer f.Close()
+		if _, err := f.Write(raw); err != nil {
 			return err
 		}
 		return nil
