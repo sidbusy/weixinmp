@@ -487,3 +487,51 @@ func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error
 	}
 	return "", errors.New("upload media file failed")
 }
+
+// delete custom menu
+func (this *Weixinmp) DeleteCustomMenu() error {
+	url := plainPreUrl + "menu/delete?access_token="
+	// retry
+	for i := 0; i < retryNum; i++ {
+		token, err := this.accessToken.extract()
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		resp, err := http.Get(url + token)
+		defer resp.Body.Close()
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		raw, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		var rtn struct {
+			ErrCode int64  `json:"errcode"`
+			ErrMsg  string `json:"errmsg"`
+		}
+		if err := json.Unmarshal(raw, &rtn); err != nil {
+			if i < retryNum {
+				continue
+			}
+			return err
+		}
+		if rtn.ErrCode != 0 {
+			if i < retryNum {
+				continue
+			}
+			return errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
+		}
+		return nil
+	}
+	return errors.New("delete custom menu failed")
+}
