@@ -197,6 +197,13 @@ type Article struct {
 
 返回`string`类型值
 
+自定义菜单
+-
+
+`mp.DeleteCustomMenu()` 删除自定义菜单
+
+返回`error`类型值
+
 相关链接
 -
 
