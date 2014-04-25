@@ -10,14 +10,15 @@ import (
 	"strings"
 )
 
-// weixinmp request
+// request from weixinmp
 type Request struct {
-	// request header fields
+	Token string
+	// request common fields
 	ToUserName   string
 	FromUserName string
 	CreateTime   int64
 	MsgType      string
-	// general request fields
+	// message request fields
 	Content      string
 	MsgId        int64
 	PicUrl       string
@@ -39,10 +40,9 @@ type Request struct {
 	Latitude  float64
 	Longitude float64
 	Precision float64
-
-	token string
 }
 
+// validate request
 func (this *Request) IsValid(rw http.ResponseWriter, req *http.Request) bool {
 	if !this.checkSignature(req) {
 		rw.WriteHeader(http.StatusUnauthorized)
@@ -54,7 +54,7 @@ func (this *Request) IsValid(rw http.ResponseWriter, req *http.Request) bool {
 		rw.Write([]byte(req.FormValue("echostr")))
 		return false
 	}
-	if err := this.parseXML(req); err != nil {
+	if err := this.parseRequest(req); err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		rw.Write([]byte(err.Error()))
 		return false
@@ -62,9 +62,21 @@ func (this *Request) IsValid(rw http.ResponseWriter, req *http.Request) bool {
 	return true
 }
 
+func (this *Request) parseRequest(req *http.Request) error {
+	raw, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	defer req.Body.Close()
+	if err := xml.Unmarshal(raw, this); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (this *Request) checkSignature(req *http.Request) bool {
 	ss := sort.StringSlice{
-		this.token,
+		this.Token,
 		req.FormValue("timestamp"),
 		req.FormValue("nonce"),
 	}
@@ -73,14 +85,4 @@ func (this *Request) checkSignature(req *http.Request) bool {
 	h := sha1.New()
 	h.Write([]byte(s))
 	return fmt.Sprintf("%x", h.Sum(nil)) == req.FormValue("signature")
-}
-
-func (this *Request) parseXML(req *http.Request) error {
-	defer req.Body.Close()
-	if raw, err := ioutil.ReadAll(req.Body); err != nil {
-		return err
-	} else if err := xml.Unmarshal(raw, this); err != nil {
-		return err
-	}
-	return nil
 }

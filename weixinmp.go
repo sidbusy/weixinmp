@@ -16,40 +16,42 @@ import (
 )
 
 const (
-	// request types
-	MsgTypeText      = "text"
-	MsgTypeImage     = "image"
-	MsgTypeVoice     = "voice"
-	MsgTypeVideo     = "video"
-	MsgTypeLocation  = "location"
-	MsgTypeLink      = "link"
-	MsgTypeEvent     = "event"
+	// request message types
+	MsgTypeText     = "text"
+	MsgTypeImage    = "image"
+	MsgTypeVoice    = "voice"
+	MsgTypeVideo    = "video"
+	MsgTypeLocation = "location"
+	MsgTypeLink     = "link"
+	MsgTypeEvent    = "event"
+	// event types
 	EventSubscribe   = "subscribe"
 	EventUnsubscribe = "unsubscribe"
 	EventScan        = "SCAN"
 	EventLocation    = "LOCATION"
 	EventClick       = "CLICK"
 	EventView        = "VIEW"
-	// media file types
+	// media types
 	MediaTypeImage = "image"
 	MediaTypeVoice = "voice"
 	MediaTypeVideo = "video"
 	MediaTypeThumb = "thumb"
-	// environment variables
-	retryNum        = 3
-	plainPreUrl     = "https://api.weixin.qq.com/cgi-bin/"
-	mediaPreUrl     = "http://file.api.weixin.qq.com/cgi-bin/media/"
-	accessTokenTemp = "accesstoken.temp"
+	// environment constants
+	UrlPrefix      = "https://api.weixin.qq.com/cgi-bin/"
+	MediaUrlPrefix = "http://file.api.weixin.qq.com/cgi-bin/media/"
+	retryNum       = 3
 )
 
-type qrScene struct {
-	ExpireSeconds int64  `json:"expire_seconds,omitempty"`
-	ActionName    string `json:"action_name"`
-	ActionInfo    struct {
-		Scene struct {
-			SceneId int64 `json:"scene_id"`
-		} `json:"scene"`
-	} `json:"action_info"`
+type Weixinmp struct {
+	Request     *Request
+	AccessToekn *AccessToekn
+}
+
+func New(token, appId, appSecret string) *Weixinmp {
+	return &Weixinmp{
+		Request:     &Request{Token: token},
+		AccessToekn: &AccessToekn{AppId: appId, AppSecret: appSecret},
+	}
 }
 
 // message structs
@@ -139,21 +141,7 @@ type Article struct {
 	Url         string `json:"url"`
 }
 
-// weixinmp goes here
-type Weixinmp struct {
-	accessToken *accessToken
-	Request     *Request
-}
-
-func New(token, appid, secret string) *Weixinmp {
-	inst := &Weixinmp{
-		accessToken: &accessToken{appid: appid, secret: secret},
-		Request:     &Request{token: token},
-	}
-	return inst
-}
-
-// reply message methods
+// reply text message
 func (this *Weixinmp) ReplyTextMsg(rw http.ResponseWriter, content string) error {
 	var msg textMsg
 	msg.MsgType = "text"
@@ -161,6 +149,7 @@ func (this *Weixinmp) ReplyTextMsg(rw http.ResponseWriter, content string) error
 	return this.replyMsg(rw, &msg)
 }
 
+// reply image message
 func (this *Weixinmp) ReplyImageMsg(rw http.ResponseWriter, mediaId string) error {
 	var msg imageMsg
 	msg.MsgType = "image"
@@ -168,6 +157,7 @@ func (this *Weixinmp) ReplyImageMsg(rw http.ResponseWriter, mediaId string) erro
 	return this.replyMsg(rw, &msg)
 }
 
+// reply voice message
 func (this *Weixinmp) ReplyVoiceMsg(rw http.ResponseWriter, mediaId string) error {
 	var msg voiceMsg
 	msg.MsgType = "voice"
@@ -175,6 +165,7 @@ func (this *Weixinmp) ReplyVoiceMsg(rw http.ResponseWriter, mediaId string) erro
 	return this.replyMsg(rw, &msg)
 }
 
+// reply video message
 func (this *Weixinmp) ReplyVideoMsg(rw http.ResponseWriter, video *Video) error {
 	var msg videoMsg
 	msg.MsgType = "video"
@@ -182,6 +173,7 @@ func (this *Weixinmp) ReplyVideoMsg(rw http.ResponseWriter, video *Video) error 
 	return this.replyMsg(rw, &msg)
 }
 
+// reply music message
 func (this *Weixinmp) ReplyMusicMsg(rw http.ResponseWriter, music *Music) error {
 	var msg musicMsg
 	msg.MsgType = "music"
@@ -189,6 +181,7 @@ func (this *Weixinmp) ReplyMusicMsg(rw http.ResponseWriter, music *Music) error 
 	return this.replyMsg(rw, &msg)
 }
 
+// reply news  message
 func (this *Weixinmp) ReplyNewsMsg(rw http.ResponseWriter, articles *[]Article) error {
 	var msg newsMsg
 	msg.MsgType = "news"
@@ -197,6 +190,7 @@ func (this *Weixinmp) ReplyNewsMsg(rw http.ResponseWriter, articles *[]Article) 
 	return this.replyMsg(rw, &msg)
 }
 
+// reply message
 func (this *Weixinmp) replyMsg(rw http.ResponseWriter, msg interface{}) error {
 	v := reflect.ValueOf(msg).Elem()
 	v.FieldByName("ToUserName").SetString(this.Request.FromUserName)
@@ -212,7 +206,7 @@ func (this *Weixinmp) replyMsg(rw http.ResponseWriter, msg interface{}) error {
 	return nil
 }
 
-// send message methods
+// send text message
 func (this *Weixinmp) SendTextMsg(touser string, content string) error {
 	var msg textMsg
 	msg.MsgType = "text"
@@ -220,6 +214,7 @@ func (this *Weixinmp) SendTextMsg(touser string, content string) error {
 	return this.sendMsg(touser, &msg)
 }
 
+// send image message
 func (this *Weixinmp) SendImageMsg(touser string, mediaId string) error {
 	var msg imageMsg
 	msg.MsgType = "image"
@@ -227,6 +222,7 @@ func (this *Weixinmp) SendImageMsg(touser string, mediaId string) error {
 	return this.sendMsg(touser, &msg)
 }
 
+// send voice message
 func (this *Weixinmp) SendVoiceMsg(touser string, mediaId string) error {
 	var msg voiceMsg
 	msg.MsgType = "voice"
@@ -234,6 +230,7 @@ func (this *Weixinmp) SendVoiceMsg(touser string, mediaId string) error {
 	return this.sendMsg(touser, &msg)
 }
 
+// send video message
 func (this *Weixinmp) SendVideoMsg(touser string, video *Video) error {
 	var msg videoMsg
 	msg.MsgType = "video"
@@ -241,6 +238,7 @@ func (this *Weixinmp) SendVideoMsg(touser string, video *Video) error {
 	return this.sendMsg(touser, &msg)
 }
 
+// send music message
 func (this *Weixinmp) SendMusicMsg(touser string, music *Music) error {
 	var msg musicMsg
 	msg.MsgType = "music"
@@ -248,6 +246,7 @@ func (this *Weixinmp) SendMusicMsg(touser string, music *Music) error {
 	return this.sendMsg(touser, &msg)
 }
 
+// send news message
 func (this *Weixinmp) SendNewsMsg(touser string, articles *[]Article) error {
 	var msg newsMsg
 	msg.MsgType = "news"
@@ -255,6 +254,7 @@ func (this *Weixinmp) SendNewsMsg(touser string, articles *[]Article) error {
 	return this.sendMsg(touser, &msg)
 }
 
+// send message
 func (this *Weixinmp) sendMsg(touser string, msg interface{}) error {
 	v := reflect.ValueOf(msg).Elem()
 	v.FieldByName("ToUserName").SetString(touser)
@@ -262,10 +262,36 @@ func (this *Weixinmp) sendMsg(touser string, msg interface{}) error {
 	if err != nil {
 		return err
 	}
-	if _, err := this.post("message/custom/send", data); err != nil {
-		return err
+	url := fmt.Sprintf("%smessage/custom/send?access_token=", UrlPrefix)
+	buf := bytes.NewBuffer(data)
+	// retry
+	for i := 0; i < retryNum; i++ {
+		token, err := this.AccessToekn.Fresh()
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return err
+		}
+		if _, err := post(url+token, "text/plain", buf); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return err
+		}
+		break // success
 	}
 	return nil
+}
+
+type qrScene struct {
+	ExpireSeconds int64  `json:"expire_seconds,omitempty"`
+	ActionName    string `json:"action_name"`
+	ActionInfo    struct {
+		Scene struct {
+			SceneId int64 `json:"scene_id"`
+		} `json:"scene"`
+	} `json:"action_info"`
 }
 
 // get qrcode url
@@ -295,75 +321,37 @@ func (this *Weixinmp) createQRCode(inf *qrScene) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	raw, err := this.post("qrcode/create", data)
-	if err != nil {
-		return "", err
-	}
-	var rtn struct {
-		Ticket        string `json:"ticket"`
-		ExpireSeconds int64  `json:"expire_seconds"`
-	}
-	if err := json.Unmarshal(raw, &rtn); err != nil {
-		return "", err
-	}
-	return rtn.Ticket, nil
-}
-
-// send post request
-func (this *Weixinmp) post(action string, data []byte) ([]byte, error) {
-	url := plainPreUrl + action + "?access_token="
+	url := fmt.Sprintf("%sqrcode/create?access_token=", UrlPrefix)
+	buf := bytes.NewBuffer(data)
+	ticket := ""
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.accessToken.extract()
+		token, err := this.AccessToekn.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, err
+			return "", err
 		}
-		resp, err := http.Post(url+token, "application/json; charset=utf-8", bytes.NewReader(data))
-		defer resp.Body.Close()
+		rtn, err := post(url+token, "text/plain", buf)
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, err
+			return "", err
 		}
-		raw, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			if i < retryNum-1 {
-				continue
-			}
-			return nil, err
-		}
-		var rtn struct {
-			ErrCode int64  `json:"errcode"`
-			ErrMsg  string `json:"errmsg"`
-		}
-		if err := json.Unmarshal(raw, &rtn); err != nil {
-			if i < retryNum-1 {
-				continue
-			}
-			return nil, err
-		}
-		// failed
-		if rtn.ErrCode != 0 {
-			if i < retryNum-1 {
-				continue
-			}
-			return nil, errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
-		}
-		return raw, nil
+		ticket = rtn.Ticket
+		break // success
 	}
-	return nil, errors.New("send post request failed: " + action)
+	return ticket, nil
 }
 
-// download media file
-func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
-	url := fmt.Sprintf("%sget?media_id=%s&access_token=", mediaPreUrl, mediaId)
+// download media to file
+func (this *Weixinmp) DownloadMediaFile(mediaId, fileName string) error {
+	url := fmt.Sprintf("%sget?media_id=%s&access_token=", MediaUrlPrefix, mediaId)
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.accessToken.extract()
+		token, err := this.AccessToekn.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
@@ -371,63 +359,60 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, filePath string) error {
 			return err
 		}
 		resp, err := http.Get(url + token)
-		defer resp.Body.Close()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
 			return err
 		}
-		// error occured
-		if resp.Header.Get("Content-Type") == "text/plain" {
+		defer resp.Body.Close()
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
-			raw, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
+			return err
+		}
+		// json
+		if resp.Header.Get("Content-Type") == "text/plain" {
+			var rtn response
+			if err := json.Unmarshal(data, &rtn); err != nil {
 				if i < retryNum-1 {
 					continue
 				}
 				return err
 			}
-			var rtn struct {
-				ErrCode int64  `json:"errcode"`
-				ErrMsg  string `json:"errmsg"`
-			}
-			if err := json.Unmarshal(raw, &rtn); err != nil {
-				if i < retryNum-1 {
-					continue
-				}
-				return err
+			if i < retryNum-1 {
+				continue
 			}
 			return errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
 		}
-		raw, err := ioutil.ReadAll(resp.Body)
+		// media
+		f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, os.ModePerm)
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
 			return err
 		}
-		f, err := os.Create(filePath)
-		if err != nil {
-			return err
-		}
 		defer f.Close()
-		if _, err := f.Write(raw); err != nil {
+		if _, err := f.Write(data); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
 			return err
 		}
-		return nil
+		break // success
 	}
-	return errors.New("download media file failed")
+	return nil
 }
 
-// upload media file
-func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error) {
-	buf := &bytes.Buffer{}
-	bw := multipart.NewWriter(buf)
+// upload media to file
+func (this *Weixinmp) UploadMediaFile(mediaType, fileName string) (string, error) {
+	var buf bytes.Buffer
+	bw := multipart.NewWriter(&buf)
 	defer bw.Close()
-	f, err := os.Open(filePath)
+	f, err := os.Open(fileName)
 	if err != nil {
 		return "", err
 	}
@@ -441,99 +426,50 @@ func (this *Weixinmp) UploadMediaFile(mediaType, filePath string) (string, error
 	}
 	f.Close()
 	bw.Close()
-	url := fmt.Sprintf("%supload?type=%s&access_token=", mediaPreUrl, mediaType)
+	url := fmt.Sprintf("%supload?type=%s&access_token=", MediaUrlPrefix, mediaType)
+	mime := bw.FormDataContentType()
+	mediaId := ""
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.accessToken.extract()
+		token, err := this.AccessToekn.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
 			return "", err
 		}
-		resp, err := http.Post(url+token, bw.FormDataContentType(), buf)
-		defer resp.Body.Close()
+		rtn, err := post(url+token, mime, &buf)
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
 			return "", err
 		}
-		raw, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			if i < retryNum-1 {
-				continue
-			}
-			return "", err
-		}
-		var rtn struct {
-			Type      string `json:"type"`
-			MediaId   string `json:"media_id"`
-			CreatedAt int64  `json:"created_at"`
-			ErrCode   int64  `json:"errcode"`
-			ErrMsg    string `json:"errmsg"`
-		}
-		if err := json.Unmarshal(raw, &rtn); err != nil {
-			if i < retryNum-1 {
-				continue
-			}
-			return "", nil
-		}
-		if rtn.ErrCode != 0 && rtn.ErrMsg != "" {
-			if i < retryNum-1 {
-				continue
-			}
-			return "", errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
-		}
-		return rtn.MediaId, nil
+		mediaId = rtn.MediaId
+		break // success
 	}
-	return "", errors.New("upload media file failed")
+	return mediaId, nil
 }
 
 // delete custom menu
 func (this *Weixinmp) DeleteCustomMenu() error {
-	url := plainPreUrl + "menu/delete?access_token="
+	url := UrlPrefix + "menu/delete?access_token="
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.accessToken.extract()
+		token, err := this.AccessToekn.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
 			return err
 		}
-		resp, err := http.Get(url + token)
-		defer resp.Body.Close()
-		if err != nil {
+		if _, err := get(url + token); err != nil {
 			if i < retryNum-1 {
 				continue
 			}
 			return err
 		}
-		raw, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			if i < retryNum-1 {
-				continue
-			}
-			return err
-		}
-		var rtn struct {
-			ErrCode int64  `json:"errcode"`
-			ErrMsg  string `json:"errmsg"`
-		}
-		if err := json.Unmarshal(raw, &rtn); err != nil {
-			if i < retryNum-1 {
-				continue
-			}
-			return err
-		}
-		if rtn.ErrCode != 0 {
-			if i < retryNum-1 {
-				continue
-			}
-			return errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
-		}
-		return nil
+		break // success
 	}
-	return errors.New("delete custom menu failed")
+	return nil
 }
