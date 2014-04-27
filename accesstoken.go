@@ -1,9 +1,11 @@
 package weixinmp
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"time"
 )
 
@@ -50,6 +52,16 @@ func (this *AccessToken) fetchAndStore() (string, error) {
 }
 
 func (this *AccessToken) store(token string) error {
+	dir := path.Dir(this.TmpName)
+	fi, err := os.Stat(dir)
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, os.ModeTemporary); err != nil {
+			return err
+		}
+	}
+	if !fi.IsDir() {
+		return errors.New("path is not a directory")
+	}
 	tmp, err := os.OpenFile(this.TmpName, os.O_WRONLY|os.O_CREATE, os.ModeTemporary)
 	if err != nil {
 		return err
