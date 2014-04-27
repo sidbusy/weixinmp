@@ -44,13 +44,13 @@ const (
 
 type Weixinmp struct {
 	Request     *Request
-	AccessToekn *AccessToekn
+	AccessToken *AccessToken
 }
 
 func New(token, appId, appSecret string) *Weixinmp {
 	return &Weixinmp{
 		Request:     &Request{Token: token},
-		AccessToekn: &AccessToekn{AppId: appId, AppSecret: appSecret},
+		AccessToken: &AccessToken{AppId: appId, AppSecret: appSecret},
 	}
 }
 
@@ -266,7 +266,7 @@ func (this *Weixinmp) sendMsg(touser string, msg interface{}) error {
 	buf := bytes.NewBuffer(data)
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.AccessToekn.Fresh()
+		token, err := this.AccessToken.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
@@ -326,7 +326,7 @@ func (this *Weixinmp) createQRCode(inf *qrScene) (string, error) {
 	ticket := ""
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.AccessToekn.Fresh()
+		token, err := this.AccessToken.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
@@ -351,7 +351,7 @@ func (this *Weixinmp) DownloadMediaFile(mediaId, fileName string) error {
 	url := fmt.Sprintf("%sget?media_id=%s&access_token=", MediaUrlPrefix, mediaId)
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.AccessToekn.Fresh()
+		token, err := this.AccessToken.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
@@ -431,7 +431,7 @@ func (this *Weixinmp) UploadMediaFile(mediaType, fileName string) (string, error
 	mediaId := ""
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.AccessToekn.Fresh()
+		token, err := this.AccessToken.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue
@@ -456,7 +456,7 @@ func (this *Weixinmp) DeleteCustomMenu() error {
 	url := UrlPrefix + "menu/delete?access_token="
 	// retry
 	for i := 0; i < retryNum; i++ {
-		token, err := this.AccessToekn.Fresh()
+		token, err := this.AccessToken.Fresh()
 		if err != nil {
 			if i < retryNum-1 {
 				continue

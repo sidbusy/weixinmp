@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-type AccessToekn struct {
+type AccessToken struct {
 	AppId     string
 	AppSecret string
 	TmpName   string
 }
 
 // get fresh access_token string
-func (this *AccessToekn) Fresh() (string, error) {
+func (this *AccessToken) Fresh() (string, error) {
 	if this.TmpName == "" {
 		this.TmpName = "accesstoken.tmp"
 	}
@@ -31,14 +31,14 @@ func (this *AccessToekn) Fresh() (string, error) {
 		return "", err
 	}
 	defer tmp.Close()
-	raw, err := ioutil.ReadAll(tmp)
+	data, err := ioutil.ReadAll(tmp)
 	if err != nil {
 		return "", err
 	}
-	return string(raw), nil
+	return string(data), nil
 }
 
-func (this *AccessToekn) fetchAndStore() (string, error) {
+func (this *AccessToken) fetchAndStore() (string, error) {
 	token, err := this.fetch()
 	if err != nil {
 		return "", err
@@ -49,7 +49,7 @@ func (this *AccessToekn) fetchAndStore() (string, error) {
 	return token, nil
 }
 
-func (this *AccessToekn) store(token string) error {
+func (this *AccessToken) store(token string) error {
 	tmp, err := os.OpenFile(this.TmpName, os.O_WRONLY|os.O_CREATE, os.ModeTemporary)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (this *AccessToekn) store(token string) error {
 	return nil
 }
 
-func (this *AccessToekn) fetch() (string, error) {
+func (this *AccessToken) fetch() (string, error) {
 	rtn, err := get(fmt.Sprintf(
 		"%stoken?grant_type=client_credential&appid=%s&secret=%s",
 		UrlPrefix,
