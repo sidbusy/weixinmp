@@ -197,9 +197,20 @@ type Article struct {
 
 返回`string`类型值
 
-自定义菜单
+创建自定义菜单
 -
+`mp.CreateCustomMenu(&[]weixinmp.Button)` 创建自定义菜单
 
+返回`error`类型值
+
+创建自定义菜单
+-
+`mp.GetCustomMenu()` 创建自定义菜单
+
+返回`([]weixinmp.Button, error)`类型值
+
+删除自定义菜单
+-
 `mp.DeleteCustomMenu()` 删除自定义菜单
 
 返回`error`类型值
@@ -222,7 +233,7 @@ type Article struct {
 更新日志
 -
 
-Todo
+Release 20140608
 
 - 创建/查询/删除自定义菜单
 

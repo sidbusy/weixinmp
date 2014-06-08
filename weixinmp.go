@@ -36,6 +36,9 @@ const (
 	MediaTypeVoice = "voice"
 	MediaTypeVideo = "video"
 	MediaTypeThumb = "thumb"
+	// button types
+	ButtonTypeClick = "click"
+	ButtonTypeView  = "view"
 	// environment constants
 	UrlPrefix      = "https://api.weixin.qq.com/cgi-bin/"
 	MediaUrlPrefix = "http://file.api.weixin.qq.com/cgi-bin/media/"
@@ -449,6 +452,105 @@ func (this *Weixinmp) UploadMediaFile(mediaType, fileName string) (string, error
 		break // success
 	}
 	return mediaId, nil
+}
+
+type Button struct {
+	Type      string   `json:"type,omitempty"`
+	Name      string   `json:"name"`
+	Key       string   `json:"key,omitempty"`
+	Url       string   `json:"url,omitempty"`
+	SubButton []Button `json:"sub_button,omitempty"`
+}
+
+// create custom menu
+func (this *Weixinmp) CreateCustomMenu(btn *[]Button) error {
+	var menu struct {
+		Button *[]Button `json:"button"`
+	}
+	menu.Button = btn
+	data, err := json.Marshal(&menu)
+	if err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(data)
+	url := fmt.Sprintf("%smenu/create?access_token=", UrlPrefix)
+	// retry
+	for i := 0; i < retryNum; i++ {
+		token, err := this.AccessToken.Fresh()
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return err
+		}
+		if _, err := post(url+token, "text/plain", buf); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return err
+		}
+		break // success
+	}
+	return nil
+}
+
+// get custom menu
+func (this *Weixinmp) GetCustomMenu() ([]Button, error) {
+	var menu struct {
+		Menu struct {
+			Button []Button `json:"button"`
+		} `json:"menu"`
+	}
+	url := fmt.Sprintf("%smenu/get?access_token=", UrlPrefix)
+	// retry
+	for i := 0; i < retryNum; i++ {
+		token, err := this.AccessToken.Fresh()
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		resp, err := http.Get(url + token)
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		defer resp.Body.Close()
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		// has error?
+		var rtn response
+		if err := json.Unmarshal(data, &rtn); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		// yes
+		if rtn.ErrCode != 0 {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
+		}
+		// no
+		if err := json.Unmarshal(data, &menu); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		break // success
+	}
+	return menu.Menu.Button, nil
 }
 
 // delete custom menu
