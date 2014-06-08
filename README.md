@@ -203,9 +203,9 @@ type Article struct {
 
 返回`error`类型值
 
-创建自定义菜单
+查询自定义菜单
 -
-`mp.GetCustomMenu()` 创建自定义菜单
+`mp.GetCustomMenu()` 查询自定义菜单
 
 返回`([]weixinmp.Button, error)`类型值
 
