@@ -8,7 +8,7 @@ Hello, 世界
 
 获取`weixinmp`包
 
-	go get github.com/sidbusy/weixinmp
+	go get -u github.com/sidbusy/weixinmp
 
 
 创建`server.go`
@@ -17,6 +17,7 @@ Hello, 世界
 package main
 
 import (
+	"log"
 	"net/http"
 	"github.com/sidbusy/weixinmp"
 )
@@ -24,7 +25,7 @@ import (
 func main() {
 	// 注册处理函数
 	http.HandleFunc("/receiver", receiver)
-	http.ListenAndServe(":80", nil)
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
 
 func receiver(w http.ResponseWriter, r *http.Request) {
