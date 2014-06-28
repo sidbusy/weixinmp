@@ -592,7 +592,7 @@ type UserInfo struct {
 // get user info
 func (this *Weixinmp) GetUserInfo(openId string) (UserInfo, error) {
 	var uinf UserInfo
-	url := sprintf("%suser/info?lang=zh_CN&openid=%s&access_token=", UrlPrefix, openId)
+	url := fmt.Sprintf("%suser/info?lang=zh_CN&openid=%s&access_token=", UrlPrefix, openId)
 	// retry
 	for i := 0; i < retryNum; i++ {
 		token, err := this.AccessToken.Fresh()
@@ -600,14 +600,14 @@ func (this *Weixinmp) GetUserInfo(openId string) (UserInfo, error) {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, err
+			return uinf, err
 		}
 		resp, err := http.Get(url + token)
 		if err != nil {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, err
+			return uinf, err
 		}
 		defer resp.Body.Close()
 		data, err := ioutil.ReadAll(resp.Body)
@@ -615,7 +615,7 @@ func (this *Weixinmp) GetUserInfo(openId string) (UserInfo, error) {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, err
+			return uinf, err
 		}
 		// has error?
 		var rtn response
@@ -623,21 +623,21 @@ func (this *Weixinmp) GetUserInfo(openId string) (UserInfo, error) {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, err
+			return uinf, err
 		}
 		// yes
 		if rtn.ErrCode != 0 {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
+			return uinf, errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
 		}
 		// no
 		if err := json.Unmarshal(data, &uinf); err != nil {
 			if i < retryNum-1 {
 				continue
 			}
-			return nil, err
+			return uinf, err
 		}
 		break // success
 	}
