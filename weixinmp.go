@@ -575,3 +575,71 @@ func (this *Weixinmp) DeleteCustomMenu() error {
 	}
 	return nil
 }
+
+type UserInfo struct {
+	Subscribe     int64  `json:"subscribe"`
+	Openid        string `json:"openid"`
+	Nickname      string `json:"nickname"`
+	Sex           int64  `json:"sex"`
+	Language      string `json:"language"`
+	City          string `json:"city"`
+	Province      string `json:"province"`
+	Country       string `json:"country"`
+	Headimgurl    string `json:"headimgurl"`
+	SubscribeTime int64  `json:"subscribe_time"`
+}
+
+// get user info
+func (this *Weixinmp) GetUserInfo(openId string) (UserInfo, error) {
+	var uinf UserInfo
+	url := sprintf("%suser/info?lang=zh_CN&openid=%s&access_token=", UrlPrefix, openId)
+	// retry
+	for i := 0; i < retryNum; i++ {
+		token, err := this.AccessToken.Fresh()
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		resp, err := http.Get(url + token)
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		defer resp.Body.Close()
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		// has error?
+		var rtn response
+		if err := json.Unmarshal(data, &rtn); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		// yes
+		if rtn.ErrCode != 0 {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, errors.New(fmt.Sprintf("%d %s", rtn.ErrCode, rtn.ErrMsg))
+		}
+		// no
+		if err := json.Unmarshal(data, &uinf); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return nil, err
+		}
+		break // success
+	}
+	return uinf, nil
+}
