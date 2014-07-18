@@ -46,77 +46,61 @@ const (
 )
 
 type Weixinmp struct {
-	Request     *Request
-	AccessToken *AccessToken
+	Request     Request
+	AccessToken AccessToken
 }
 
 func New(token, appId, appSecret string) *Weixinmp {
 	return &Weixinmp{
-		Request:     &Request{Token: token},
-		AccessToken: &AccessToken{AppId: appId, AppSecret: appSecret},
+		Request:     Request{Token: token},
+		AccessToken: AccessToken{AppId: appId, AppSecret: appSecret},
 	}
 }
 
 // message structs
-type textMsg struct {
+type msgHeader struct {
 	XMLName      xml.Name `xml:"xml" json:"-"`
 	ToUserName   string   `json:"touser"`
 	FromUserName string   `json:"-"`
 	CreateTime   int64    `json:"-"`
 	MsgType      string   `json:"msgtype"`
-	Content      string   `json:"-"`
-	Text         struct {
+}
+
+type textMsg struct {
+	msgHeader
+	Content string `json:"-"`
+	Text    struct {
 		Content string `xml:"-" json:"content"`
 	} `xml:"-" json:"text"`
 }
 
 type imageMsg struct {
-	XMLName      xml.Name `xml:"xml" json:"-"`
-	ToUserName   string   `json:"touser"`
-	FromUserName string   `json:"-"`
-	CreateTime   int64    `json:"-"`
-	MsgType      string   `json:"msgtype"`
-	Image        struct {
+	msgHeader
+	Image struct {
 		MediaId string `json:"media_id"`
 	} `json:"image"`
 }
 
 type voiceMsg struct {
-	XMLName      xml.Name `xml:"xml" json:"-"`
-	ToUserName   string   `json:"touser"`
-	FromUserName string   `json:"-"`
-	CreateTime   int64    `json:"-"`
-	MsgType      string   `json:"msgtype"`
-	Voice        struct {
+	msgHeader
+	Voice struct {
 		MediaId string `json:"media_id"`
 	} `json:"voice"`
 }
 
 type videoMsg struct {
-	XMLName      xml.Name `xml:"xml" json:"-"`
-	ToUserName   string   `json:"touser"`
-	FromUserName string   `json:"-"`
-	CreateTime   int64    `json:"-"`
-	MsgType      string   `json:"msgtype"`
-	Video        *Video   `json:"video"`
+	msgHeader
+	Video *Video `json:"video"`
 }
 
 type musicMsg struct {
-	XMLName      xml.Name `xml:"xml" json:"-"`
-	ToUserName   string   `json:"touser"`
-	FromUserName string   `json:"-"`
-	CreateTime   int64    `json:"-"`
-	MsgType      string   `json:"msgtype"`
-	Music        *Music   `json:"music"`
+	msgHeader
+	Music *Music `json:"music"`
 }
 
 type newsMsg struct {
-	XMLName      xml.Name `xml:"xml" json:"-"`
-	ToUserName   string   `json:"touser"`
-	FromUserName string   `json:"-"`
-	CreateTime   int64    `json:"-"`
-	MsgType      string   `json:"msgtype"`
-	ArticleCount int      `json:"-"`
+	msgHeader
+	ArticleCount int `json:"-"`
 	Articles     struct {
 		Item *[]Article `xml:"item" json:"articles"`
 	} `json:"news"`
