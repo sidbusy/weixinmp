@@ -35,7 +35,7 @@ func (this *AccessToken) Fresh() (string, error) {
 	if err != nil && !os.IsExist(err) {
 		return this.fetchAndStore()
 	}
-	expires := fi.ModTime().Unix() + 7200
+	expires := fi.ModTime().Add(2 * time.Hour).Unix()
 	if expires <= time.Now().Unix() {
 		return this.fetchAndStore()
 	}
@@ -70,14 +70,14 @@ func (this *AccessToken) store(token string) error {
 	path := path.Dir(this.TmpName)
 	fi, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(path, os.ModeTemporary); err != nil {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			return err
 		}
 	}
 	if !fi.IsDir() {
 		return errors.New("path is not a directory")
 	}
-	tmp, err := os.OpenFile(this.TmpName, os.O_WRONLY|os.O_CREATE, os.ModeTemporary)
+	tmp, err := os.OpenFile(this.TmpName, os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (this *AccessToken) lock() error {
 	path := path.Dir(this.LckName)
 	fi, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(path, os.ModeTemporary); err != nil {
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			return err
 		}
 	}
