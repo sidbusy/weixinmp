@@ -140,7 +140,6 @@ type Video struct {
 type Music struct {
 	Title        string
 	Description  string
-	MediaId      string
 	MusicUrl     string
 	HQMusicUrl   string
 	ThumbMediaId string
