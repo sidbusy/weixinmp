@@ -115,7 +115,6 @@ type Video struct {
 type Music struct {
 	Title        string `json:"title"`
 	Description  string `json:"description"`
-	MediaId      string `json:"media_id"`
 	MusicUrl     string `json:"musicurl"`
 	HQMusicUrl   string `json:"hqmusicurl"`
 	ThumbMediaId string `json:"thumb_media_id"`
