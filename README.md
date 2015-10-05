@@ -1,6 +1,8 @@
 微信公众平台SDK for Go
 =
 
+[![Build Status](https://travis-ci.org/sidbusy/weixinmp.svg)](https://travis-ci.org/sidbusy/weixinmp)
+
 这是一个使用Go语言编写的微信公众平台开发接口封装包.
 
 Hello, 世界
