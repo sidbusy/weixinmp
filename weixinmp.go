@@ -106,6 +106,19 @@ type newsMsg struct {
 	} `json:"news"`
 }
 
+// 群发图文消息
+type newsGroupMsg struct {
+	Filter struct {
+		IsToAll bool   `json:"is_to_all"`
+		GroupId string `json:"group_id"`
+	} `json:"filter"`
+
+	Mpnews struct {
+		MediaId string `json:"media_id"`
+	} `json:"mpnews"`
+	MsgType string `json:"msgtype"`
+}
+
 type Video struct {
 	MediaId     string `json:"media_id"`
 	Title       string `json:"title"`
@@ -249,6 +262,53 @@ func (this *Weixinmp) sendMsg(touser string, msg interface{}) error {
 		return err
 	}
 	url := fmt.Sprintf("%smessage/custom/send?access_token=", UrlPrefix)
+	buf := bytes.NewBuffer(data)
+	// retry
+	for i := 0; i < retryNum; i++ {
+		token, err := this.AccessToken.Fresh()
+		if err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return err
+		}
+		if _, err := post(url+token, "text/plain", buf); err != nil {
+			if i < retryNum-1 {
+				continue
+			}
+			return err
+		}
+		break // success
+	}
+	return nil
+}
+
+// 向全部用户群发图文消息
+func (this *Weixinmp) sendNewsToALl(mediaId string) error {
+	var news newsGroupMsg
+	news.MsgType = "mpnews"
+	news.Filter.IsToAll = true
+	news.Mpnews.MediaId = mediaId
+	return this.sendGroupMsg(news)
+}
+
+// 向特定GroupId用户群发图文消息
+func (this *Weixinmp) sendNewsToGroup(groupId string, mediaId string) error {
+	var news newsGroupMsg
+	news.MsgType = "mpnews"
+	news.Filter.IsToAll = false
+	news.Filter.GroupId = groupId
+	news.Mpnews.MediaId = mediaId
+	return this.sendGroupMsg(news)
+}
+
+// 群发消息
+func (this *Weixinmp) sendGroupMsg(msg interface{}) error {
+	url := fmt.Sprintf("%smessage/mass/sendall?access_token=", UrlPrefix)
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
 	buf := bytes.NewBuffer(data)
 	// retry
 	for i := 0; i < retryNum; i++ {

@@ -233,6 +233,9 @@ type Article struct {
 更新日志
 -
 
+Release 20151002
+- 修改accesstoken存储规则,支持多个公众号并存
+
 Release 20140608
 
 - 创建/查询/删除自定义菜单

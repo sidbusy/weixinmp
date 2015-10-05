@@ -19,7 +19,7 @@ type AccessToken struct {
 // get fresh access_token string
 func (this *AccessToken) Fresh() (string, error) {
 	if this.TmpName == "" {
-		this.TmpName = "accesstoken.tmp"
+		this.TmpName = this.AppId + "-accesstoken.tmp"
 	}
 	if this.LckName == "" {
 		this.LckName = this.TmpName + ".lck"
