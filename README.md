@@ -66,6 +66,8 @@ func receiver(w http.ResponseWriter, r *http.Request) {
 
 `weixinmp.MsgTypeVideo` 视频消息
 
+`weixinmp.MsgTypeShortVideo` 短视频消息
+
 `weixinmp.MsgTypeLocation` 地理位置消息
 
 `weixinmp.MsgTypeLink` 链接消息
