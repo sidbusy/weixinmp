@@ -17,13 +17,14 @@ import (
 
 const (
 	// request message types
-	MsgTypeText     = "text"
-	MsgTypeImage    = "image"
-	MsgTypeVoice    = "voice"
-	MsgTypeVideo    = "video"
-	MsgTypeLocation = "location"
-	MsgTypeLink     = "link"
-	MsgTypeEvent    = "event"
+	MsgTypeText       = "text"
+	MsgTypeImage      = "image"
+	MsgTypeVoice      = "voice"
+	MsgTypeVideo      = "video"
+	MsgTypeShortVideo = "shortvideo"
+	MsgTypeLocation   = "location"
+	MsgTypeLink       = "link"
+	MsgTypeEvent      = "event"
 	// event types
 	EventSubscribe   = "subscribe"
 	EventUnsubscribe = "unsubscribe"
